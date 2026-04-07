@@ -14,7 +14,7 @@ gmsadump.py was a complete rewrite of the original gMSADump.py tool, by myself a
 
 ## Root Cause
 
-All three tools depend on **ldap3** for their LDAP transport layer. ldap3 implements NTLM authentication as a straightforward bind — it completes the three-way NTLM handshake (NEGOTIATE → CHALLENGE → AUTHENTICATE) but does not negotiate **SASL GSS-API Privacy** (Sign + Seal) as part of that handshake.
+All three tools depend on **ldap3** for their LDAP transport layer. ldap3 implements NTLM authentication as a straightforward bind, it completes the three-way NTLM handshake (NEGOTIATE → CHALLENGE → AUTHENTICATE) but does not negotiate **SASL GSS-API Privacy** (Sign + Seal) as part of that handshake.
 
 This matters because Windows DCs gate certain sensitive attribute reads behind channel confidentiality. With gMSADumper for example, When a client requests `msDS-ManagedPassword` or attempts writes over a connection the DC considers unencrypted, the DC responds with `strongAuthRequired` (LDAP error `00002028`) or silently omits the attribute from the result set entirely. The DC accepts two forms of confidentiality:
 
