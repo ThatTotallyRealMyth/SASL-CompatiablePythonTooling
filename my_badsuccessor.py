@@ -372,7 +372,7 @@ class BADSUCCESSOR:
             success = ldapConnection.search(
                 search_base=dn,
                 search_filter='(objectClass=*)',
-                search_scope=ldap3.BASE,
+                search_scope=0,
                 attributes=['cn']
             )
             return success and len(ldapConnection.entries) > 0
