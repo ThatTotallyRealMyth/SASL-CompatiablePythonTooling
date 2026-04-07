@@ -41,12 +41,14 @@ from impacket.krb5.ccache import CCache
 from impacket.krb5.kerberosv5 import getKerberosTGT, getKerberosTGS
 from impacket.krb5.types import Principal
 from impacket.krb5 import constants
-from ldap3 import MODIFY_DELETE, MODIFY_ADD, MODIFY_REPLACE
-import ldap3
 from impacket.ldap import ldap, ldaptypes, ldapasn1
 import dns.resolver
 import datetime
 
+##Testing out constants and if we can safely remove the ldap3 import
+MODIFY_ADD = 0
+MODIFY_DELETE = 1
+MODIFY_REPLACE = 2
 
 def print_m(string):
     sys.stderr.write('\033[94m[-]\033[0m %s\n' % (string))
@@ -673,7 +675,8 @@ def main():
             continue
         targetentry = entry
         break
-    #It seems that adding the -dns-ip at times is neccesary since the script cant seem to find the "dns server" otherwise.
+    
+    # It seems that adding the -dns-ip at times is neccesary since the script cant seem to find the "dns server" otherwise.
     # Instead its easier for us to Use -dns-ip if the executor provided, otherwise fallback to -dc-ip, 
     # otherwise fallback to the host/IP used for LDAP.
     dns_target_to_use = args.dns_ip if args.dns_ip else (args.dc_ip if args.dc_ip else target_host)
