@@ -832,7 +832,7 @@ class BADSUCCESSOR:
                 return True
 
             modifications = {
-                'msDS-ManagedAccountPrecededByLink': [(ldap3.MODIFY_REPLACE, [target_dn])]
+                'msDS-ManagedAccountPrecededByLink': [(2, [target_dn])]
             }
 
             success = ldapConnection.modify(dmsa_dn, modifications)
