@@ -435,7 +435,7 @@ class BADSUCCESSOR:
                 success = ldapConnection.search(
                     search_base=self.__baseDN,
                     search_filter='(objectClass=domain)',
-                    search_scope=ldap3.BASE,
+                    search_scope=0,
                     attributes=['objectSid']
                 )
 
@@ -795,7 +795,7 @@ class BADSUCCESSOR:
             success = ldapConnection.search(
                 search_base=dmsa_dn,
                 search_filter='(objectClass=msDS-DelegatedManagedServiceAccount)',
-                search_scope=ldap3.BASE,
+                search_scope=0,
                 attributes=['msDS-ManagedAccountPrecededByLink']
             )
 
