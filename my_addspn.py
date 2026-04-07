@@ -2,9 +2,11 @@
 ####################
 #
 # Copyright (c) 2023 Dirk-jan Mollema (@_dirkjan)
-# Modified to use impacket.ldap for GSSAPI signing support when using NTLM/password auth.
+# Modified to use impacket.ldap for GSSAPI signing support when using NTLM/password auth as thats
+# required by domain controllers with LDAP signing set to enforcement. The script was changed to remove the ldap3
+# dependency as theres no point in hacking two different modules that do the same things
 #
-####################
+
 import sys
 import argparse
 import os
