@@ -8,7 +8,7 @@ gmsadump.py was a complete rewrite of the original gMSADump.py tool, by myself a
 
 | Tool | Original Author | What It Does |
 |---|---|---|
-| `meow.py` (gMSADumper) | micahvandeusen | Dumps gMSA managed passwords as NT hash + Kerberos keys |
+| `gmsadump.py` (gMSADumper) | micahvandeusen | Dumps gMSA managed passwords as NT hash + Kerberos keys |
 | `dnstool.py` | dirkjanm (krbrelayx) | Reads and modifies AD-integrated DNS records via LDAP |
 | `badsuccessor.py` | Fortra / Impacket | Abuses the badsucessor vulnrability released by Akamai |
 
@@ -26,6 +26,10 @@ ldap3 supports neither out of the box. Its `authentication=NTLM` mode does a pla
 The contrast is visible in Wireshark. A tool using ldap3 shows a bare `NTLMSSP_NEGOTIATE` frame followed by `bindResponse: strongAuthRequired`. A tool using impacket's LDAP implementation shows `NTLMSSP_NEGOTIATEsasl` followed by `SASL GSS-API Privacy: payload` frames — the entire LDAP session is opaque on the wire after the handshake, identical to what bloodyAD produces.
 As an example, running dnstool.py, we get the following ouput:
 ```bash
+[-] Connecting to host...
+[-] Binding to host
+[!] Could not bind with specified credentials
+[!] {'result': 49, 'description': 'invalidCredentials', 'dn': '', 'message': '8009030C: LdapErr: DSID-0C090924, comment: AcceptSecurityContext error, data 52e, v65f4\x00', 'referrals': None, 'saslCreds': None, 'type': 'bindResponse'}
 ```
 
 ## The Fix
