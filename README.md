@@ -65,5 +65,5 @@ conn.search(base_dn, searchFilter=search_filter, attributes=[...], perRecordCall
 One gotcha worth noting: impacket's `search()` method takes `scope` as its second **positional** argument. Passing the search filter string as the second positional argument causes pyasn1 to attempt coercing the filter string into an integer enum and throw a `PyAsn1Error`. The filter must always be passed as the `searchFilter=` keyword argument.
 
 
-## Why ldap3 Is Still Widely Used
-The Sign + Seal issue appears to be pretty commong. Projects like rusthound-ce, bloodhound-ce-python and others I have noticed also are not able to negoatiate when a DC asks for LDAP signing. I iamgine alot of dev enviroments dont have this issue until you hit a DC that enforces `strongAuthRequired` when it wants to.
+## Why?
+The Sign + Seal issue appears to be pretty common. Projects like rusthound-ce, bloodhound-ce-python and others I have noticed also are not able to negoatiate when a DC asks for LDAP signing. I iamgine alot of dev enviroments dont have this issue until you hit a DC that enforces `strongAuthRequired` when it wants to.
