@@ -1,14 +1,8 @@
 #!/usr/bin/env python
-# /// script
-# requires-python = ">=3.12"
-# dependencies = [
-#     "impacket",
-# ]
-# ///
 ####################
 #
 # Copyright (c) 2023 Dirk-jan Mollema (@_dirkjan)
-# Modified to use impacket.ldap for GSSAPI signing support.
+# Modified to use impacket.ldap for GSSAPI signing support when using NTLM/password auth.
 #
 ####################
 import sys
