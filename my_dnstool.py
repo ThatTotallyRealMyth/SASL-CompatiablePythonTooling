@@ -561,7 +561,7 @@ def main():
     try:
         results = c.search(
             searchBase=searchtarget,
-            searchFilter='(&(objectClass=dnsNode)(name=%s))' % custom_escape_filter_chars(target), #replaced ldap3 dependency with custom function
+            searchFilter='(&(objectClass=dnsNode)(name=%s))' % custom_escape_filter_chars(target), #replaced ldap3 dependency with custom function z
             attributes=['dnsRecord', 'dNSTombstoned', 'name']
         )
     except Exception as e:

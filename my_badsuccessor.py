@@ -18,9 +18,9 @@
 #
 # Notes:
 #   Patched to avoid ldap3 binds for LDAP/389 and use Impacket LDAPConnection
-#   instead, so LDAP signing/sealing works against DCs that require it.
-#   Also includes an MD4 compatibility shim for environments where hashlib
-#   lacks MD4 support.
+#   instead, so LDAP signing/sealing works against DCs that require it. Re-implemented other 
+#   aspects to get out of the use of ldap3 without compromising on stability/need
+#   
 #
 # Author:
 #   Ilya Yatsenko (@fulc2um)
@@ -39,60 +39,6 @@ import sys
 import ldap3
 from pyasn1.codec.ber import encoder
 from pyasn1.type import namedtype, univ
-
-# MD4 compatibility shim
-# Some Python/OpenSSL builds do not expose MD4 through hashlib, which breaks
-# NTLM auth in both ldap3 and some Impacket code paths.
-def _enable_md4_support():
-    try:
-        hashlib.new('md4')
-        return
-    except Exception:
-        pass
-
-    # Try enabling OpenSSL legacy provider first.
-    try:
-        import ctypes
-        for libname in ('libssl.so', 'libssl.so.3', 'libcrypto.so', 'libcrypto.so.3'):
-            try:
-                lib = ctypes.CDLL(libname)
-                if hasattr(lib, 'OSSL_PROVIDER_load'):
-                    lib.OSSL_PROVIDER_load(None, b'default')
-                    lib.OSSL_PROVIDER_load(None, b'legacy')
-            except Exception:
-                continue
-        hashlib.new('md4')
-        return
-    except Exception:
-        pass
-
-    # Final fallback: monkey patch hashlib.new('md4') using Crypto/PyCryptodome.
-    md4_impl = None
-    try:
-        from Cryptodome.Hash import MD4 as md4_impl
-    except Exception:
-        try:
-            from Crypto.Hash import MD4 as md4_impl
-        except Exception:
-            md4_impl = None
-
-    if md4_impl is None:
-        return
-
-    orig_new = hashlib.new
-
-    def patched_new(name, data=b'', **kwargs):
-        if str(name).lower() == 'md4':
-            h = md4_impl.new()
-            if data:
-                h.update(data)
-            return h
-        return orig_new(name, data, **kwargs)
-
-    hashlib.new = patched_new
-
-
-_enable_md4_support()
 
 from impacket import version
 from impacket.examples import logger
@@ -169,12 +115,15 @@ class LDAPConnectionAdapter(object):
         self.bound = True
 
     def _scope(self, search_scope):
-        if search_scope == ldap3.BASE:
-            return ldapasn1.Scope('baseObject')
-        if search_scope == ldap3.LEVEL:
-            return ldapasn1.Scope('singleLevel')
-        return ldapasn1.Scope('wholeSubtree')
-
+        # Implemented our own custom function to replace the one prior using ldap3. We wanna weed it out
+        # 0: baseObject, 1: singleLevel, 2: wholeSubtree
+        scopes = {
+            0: 'baseObject',
+            1: 'singleLevel',
+            2: 'wholeSubtree'
+        }
+        # Default to wholeSubtree (2) if an invalid scope is passed
+        return ldapasn1.Scope(scopes.get(search_scope, 'wholeSubtree'))
     def _extract_raw_vals(self, attribute):
         out = []
         for value in attribute['vals']:
@@ -366,7 +315,7 @@ class BADSUCCESSOR:
         connectTo = self.__targetIp if self.__targetIp else (self.__target if self.__target else self.__domain)
         logging.info('Connected to %s as %s\\%s' % (connectTo, self.__domain, self.__username))
         if self.__method == 'LDAP':
-            logging.info('Using LDAP with NTLM/Kerberos signing+sealing via Impacket')
+            logging.info('Using LDAP with NTLM/Kerberos signing+sealing via Impacket')#This was simply added for my own debugging purposes
         else:
             logging.info('Using LDAPS')
 
