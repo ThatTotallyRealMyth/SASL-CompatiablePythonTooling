@@ -156,6 +156,8 @@ class LDAPConnectionAdapter(object):
             attrs[attr_name] = LDAPAttributeAdapter(vals, raw_vals)
         return LDAPEntryAdapter(dn, attrs)
 
+    #Some food for thought is when we use search_scope, instead of passing op codes. We could use impackets conventions for;
+    # mods = {'description': [(MODIFY_REPLACE, ['new value'])]} Could be smth to discuss
     def search(self, search_base=None, search_filter='(objectClass=*)', search_scope=2, #replaced ldap3.SUBTREE as an agrument with 2
                attributes=None, controls=None):
         if attributes is None:
