@@ -38,7 +38,6 @@ from struct import unpack
 
 from impacket.structure import Structure
 from impacket.krb5.ccache import CCache
-import ldap3
 from impacket.krb5.types import Principal
 from impacket.krb5 import constants
 from impacket.ldap import ldap, ldaptypes, ldapasn1
@@ -397,8 +396,19 @@ def ldap_operation(func, *args, **kwargs):
         print_f('LDAP operation failed. Message returned from server: %s' % e)
         return False
 
-
-
+def custom_escape_filter_chars(text):
+    """Escapes characters for an LDAP filter per RFC 4515. This function was implemented to replace the last ldap3 dependency here
+    """
+    replacements = {
+        '\\': '\\5c',
+        '*': '\\2a',
+        '(': '\\28',
+        ')': '\\29',
+        '\x00': '\\00'
+    }
+    for char, replacement in replacements.items():
+        text = text.replace(char, replacement)
+    return text
 
 
 def parse_target(host_arg, force_ssl, port):
@@ -551,7 +561,7 @@ def main():
     try:
         results = c.search(
             searchBase=searchtarget,
-            searchFilter='(&(objectClass=dnsNode)(name=%s))' % ldap3.utils.conv.escape_filter_chars(target),
+            searchFilter='(&(objectClass=dnsNode)(name=%s))' % custom_escape_filter_chars(target), #replaced ldap3 dependency with custom function
             attributes=['dnsRecord', 'dNSTombstoned', 'name']
         )
     except Exception as e:
