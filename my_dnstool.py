@@ -398,13 +398,11 @@ def ldap_operation(func, *args, **kwargs):
 
 def ensure_impacket_ldap_compat():
     """
-    Older Impacket builds used on some Kali images do not expose add/modify/delete
-    helpers on LDAPConnection even though sendReceive() and the ASN.1 request types
-    are present. Patch them in so the rest of the script can keep a ldap3-like flow.
-
-    Important compatibility note: some builds export AddRequest/ModifyRequest/DelRequest
-    from impacket.ldap.ldapasn1, while newer ones also re-export them from
-    impacket.ldap.ldap. Resolve them dynamically so the script works on both.
+    Older Impacket builds shipped on some Kali releases did not expose LDAPConnection.add(), modify(), or delete(), even though lower-level sendReceive() was present. Current Impacket does expose those helpers. 
+    Ultimately newer builds make AddRequest / ModifyRequest / DelRequest available from impacket.ldap.ldap, while older builds may require importing them from elsewhere.
+    This was flagged by multiple people and since I did not write this tool originally and I do not have the subject matter expertise to make any serious modifications,
+    I tried my best to make it work as is by swapping out ldap3 for impacket. This is all to solve the ultimate issue of needing signign/encryption support when LDAP signing is on without
+    needing LDAPS to be accessible
     """
 
     AddRequest = getattr(ldap, 'AddRequest', ldapasn1.AddRequest)
