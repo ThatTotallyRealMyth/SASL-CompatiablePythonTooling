@@ -570,22 +570,9 @@ def main():
         sys.exit(1)
 
     domain, user = args.user.split('\\', 1)
-    password = ''
-    lmhash = ''
-    nthash = ''
-    TGT = None
-    TGS = None
-    kdcHost = args.dc_ip if args.dc_ip else domain
 
-    have_ccache = 'KRB5CCNAME' in os.environ and os.path.exists(os.environ['KRB5CCNAME'])
-
-    if args.password is None and not args.kerberos:
+    if args.password is None and not (args.kerberos and 'KRB5CCNAME' in os.environ):
         args.password = getpass.getpass()
-    elif args.password is None and args.kerberos and not args.aesKey and not have_ccache:
-        args.password = getpass.getpass()
-
-    if args.password is None:
-        args.password = ''
 
     try:
         lmhash, nthash = args.password.split(':')
@@ -594,35 +581,16 @@ def main():
     except Exception:
         lmhash = ''
         nthash = ''
-        password = args.password
+        password = args.password if args.password else ''
 
-    if args.kerberos:
-        if have_ccache:
-            domain, user, TGT, TGS = CCache.parseFile(domain, user, 'ldap/%s' % target_host)
-
-        userName = Principal(user, type=constants.PrincipalNameType.NT_PRINCIPAL.value)
-
-        if not TGT and not TGS:
-            tgt, cipher, oldSessionKey, sessionKey = getKerberosTGT(
-                userName, password, domain, lmhash, nthash, args.aesKey, kdcHost
-            )
-        elif TGT:
-            tgt = TGT['KDC_REP']
-            cipher = TGT['cipher']
-            sessionKey = TGT['sessionKey']
-
-        if not TGS:
-            serverName = Principal('ldap/%s' % target_host, type=constants.PrincipalNameType.NT_SRV_INST.value)
-            TGS = getKerberosTGS(serverName, domain, kdcHost, tgt, cipher, sessionKey)
-        else:
-            TGS = (TGS['KDC_REP'], TGS['cipher'], TGS['sessionKey'], TGS['sessionKey'])
+    kdcHost = args.dc_ip if args.dc_ip else domain
 
     print_m('Connecting to host...')
     print_m('Binding to host')
     try:
         c = ldap.LDAPConnection(ldap_url, '', args.dc_ip)
         if args.kerberos:
-            c.kerberosLogin(user, password, domain, lmhash, nthash, args.aesKey, kdcHost=kdcHost, TGS=TGS)
+            c.kerberosLogin(user, password, domain, lmhash, nthash, args.aesKey, kdcHost=kdcHost)
         else:
             c.login(user, password, domain, lmhash, nthash, authenticationChoice='sasl')
     except Exception as e:
