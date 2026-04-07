@@ -20,6 +20,9 @@
 #   Patched to avoid ldap3 binds for LDAP/389 and use Impacket LDAPConnection
 #   instead, so LDAP signing/sealing works against DCs that require it. Re-implemented other 
 #   aspects to get out of the use of ldap3 without compromising on stability/need
+#   We have also successfully removed ldap3 search scope argument providers:
+# 
+#   ldap3.BASE → 0, ldap3.LEVEL → 1, ldap3.SUBTREE → 2
 #   
 #
 # Author:
@@ -35,8 +38,6 @@ import logging
 import random
 import string
 import sys
-
-import ldap3
 from pyasn1.codec.ber import encoder
 from pyasn1.type import namedtype, univ
 
