@@ -18,12 +18,12 @@ All three tools depend on **ldap3** for their LDAP transport layer. ldap3 implem
 
 This matters because Windows DCs gate certain sensitive attribute reads behind channel confidentiality. With gMSADumper for example, When a client requests `msDS-ManagedPassword` or attempts writes over a connection the DC considers unencrypted, the DC responds with `strongAuthRequired` (LDAP error `00002028`) or silently omits the attribute from the result set entirely. The DC accepts two forms of confidentiality:
 
-- **LDAPS** — TLS on port 636, or STARTTLS on port 389
-- **NTLM with Sign + Seal** — NTLM session security where both parties derive a session key from the NTLM exchange and use it to encrypt all subsequent LDAP PDUs at the application layer
+- **LDAPS**: TLS on port 636, or STARTTLS on port 389
+- **NTLM with Sign + Seal**: NTLM session security where both parties derive a session key from the NTLM exchange and use it to encrypt all subsequent LDAP PDUs at the application layer
 
-ldap3 supports neither out of the box. Its `authentication=NTLM` mode does a plain bind only. There is no `session_security` parameter or equivalent in the publicly available ldap3 API, despite what some documentation implies.
+ldap3 supports neither out of the box(I could be wrong so happy to be corrected). Its `authentication=NTLM` mode does a plain bind only. There is no `session_security` parameter or equivalent that the versions of ldap3 in current use by many projects appears to hold.
 
-The contrast is visible in Wireshark. A tool using ldap3 shows a bare `NTLMSSP_NEGOTIATE` frame followed by `bindResponse: strongAuthRequired`. A tool using impacket's LDAP implementation shows `NTLMSSP_NEGOTIATEsasl` followed by `SASL GSS-API Privacy: payload` frames — the entire LDAP session is opaque on the wire after the handshake, identical to what bloodyAD produces.
+The differences can be nicely spoted in Wireshark. A tool using ldap3 shows a bare `NTLMSSP_NEGOTIATE` frame followed by `bindResponse: strongAuthRequired`. A tool using impacket's LDAP implementation shows `NTLMSSP_NEGOTIATEsasl` followed by `SASL GSS-API Privacy: payload` frames, the entire LDAP session is opaque on the wire after the handshake, identical to what bloodyAD produces. And a big shout out to bloodyAD for making it easy to follow the threads of this issue and find the root causes.
 As an example, running dnstool.py, we get the following ouput:
 ```bash
 [-] Connecting to host...
