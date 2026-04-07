@@ -401,7 +401,9 @@ def ensure_impacket_ldap_compat():
     Older Impacket builds shipped on some Kali releases did not expose LDAPConnection.add(), modify(), or delete(), even though lower-level sendReceive() was present. Current Impacket does expose those helpers. 
     Ultimately newer builds make AddRequest / ModifyRequest / DelRequest available from impacket.ldap.ldap, while older builds may require importing them from elsewhere.
     This was flagged by multiple people and since I did not write this tool originally and I do not have the subject matter expertise to make any serious modifications,
-    I tried my best to make it work as is by swapping out ldap3 for impacket. This is all to solve the ultimate issue of needing signign/encryption support when LDAP signing is on without
+    I tried my best to make it work as is by swapping out ldap3 for impacket. 
+    
+    This is all to solve the ultimate issue of needing signign/encryption support when LDAP signing is on without
     needing LDAPS to be accessible
     """
 
@@ -661,6 +663,10 @@ def main():
             continue
         targetentry = entry
         break
+    #It seems that adding the -dns-ip at times is neccesary since the script cant seem to find the "dns server" otherwise.
+    # Instead its easier for us to Use -dns-ip if the executor provided, otherwise fallback to -dc-ip, 
+    # otherwise fallback to the host/IP used for LDAP.
+    dns_target_to_use = args.dns_ip if args.dns_ip else (args.dc_ip if args.dc_ip else target_host)
 
     if args.action in ['add', 'modify', 'remove'] and not args.data:
         print_f('This operation requires you to specify record data with --data')
@@ -688,7 +694,7 @@ def main():
                         print_f('Record already exists and points to %s. Use --action modify to overwrite or --allow-multiple to override this' % address.formatCanonical())
                         return False
 
-            record = new_record(addtype, get_next_serial(args.dns_ip, target_host, zone, args.tcp), args.ttl)
+            record = new_record(addtype, get_next_serial(dns_target_to_use, target_host, zone, args.tcp), args.ttl)
             record['Data'] = DNS_RPC_RECORD_A()
             record['Data'].fromCanonical(args.data)
             print_m('Adding extra record')
@@ -699,7 +705,7 @@ def main():
                 'dNSTombstoned': 'FALSE',
                 'name': target,
             }
-            record = new_record(addtype, get_next_serial(args.dns_ip, target_host, zone, args.tcp), args.ttl)
+            record = new_record(addtype, get_next_serial(dns_target_to_use, target_host, zone, args.tcp), args.ttl)
             record['Data'] = DNS_RPC_RECORD_A()
             record['Data'].fromCanonical(args.data)
             record_dn = 'DC=%s,%s' % (target, searchtarget)
@@ -722,7 +728,7 @@ def main():
             print_f('No A record exists yet. Use --action add to add it')
             return
 
-        targetrecord['Serial'] = get_next_serial(args.dns_ip, target_host, zone, args.tcp)
+        targetrecord['Serial'] = get_next_serial(dns_target_to_use, target_host, zone, args.tcp)
         targetrecord['TtlSeconds'] = args.ttl
         targetrecord['Data'] = DNS_RPC_RECORD_A()
         targetrecord['Data'].fromCanonical(args.data)
@@ -750,7 +756,7 @@ def main():
             print_m('Target has only one record, tombstoning it')
             diff = datetime.datetime.today() - datetime.datetime(1601, 1, 1)
             tstime = int(diff.total_seconds() * 10000)
-            record = new_record(addtype, get_next_serial(args.dns_ip, target_host, zone, args.tcp), args.ttl)
+            record = new_record(addtype, get_next_serial(dns_target_to_use, target_host, zone, args.tcp), args.ttl)
             record['Data'] = DNS_RPC_RECORD_TS()
             record['Data']['entombedTime'] = tstime
             ldap_operation(
@@ -775,7 +781,7 @@ def main():
             print_m('Target has only one record, resurrecting it')
             diff = datetime.datetime.today() - datetime.datetime(1601, 1, 1)
             tstime = int(diff.total_seconds() * 10000)
-            record = new_record(addtype, get_next_serial(args.dns_ip, target_host, zone, args.tcp), args.ttl)
+            record = new_record(addtype, get_next_serial(dns_target_to_use, target_host, zone, args.tcp), args.ttl)
             record['Data'] = DNS_RPC_RECORD_TS()
             record['Data']['entombedTime'] = tstime
             if ldap_operation(
