@@ -10,6 +10,7 @@ gmsadump.py was a complete rewrite of the original gMSADump.py tool, by myself a
 |---|---|---|
 | `gmsadump.py` (gMSADumper) | micahvandeusen | Dumps gMSA managed passwords as NT hash + Kerberos keys |
 | `dnstool.py` | dirkjanm (krbrelayx) | Reads and modifies AD-integrated DNS records via LDAP |
+| `addspn.py` |  dirkjanm (krbrelayx) | Allows you to play around with SPNs and adding/removing/appending to them |
 | `badsuccessor.py` | Fortra / Impacket | Abuses the badsucessor vulnrability released by Akamai |
 
 ## Root Cause
