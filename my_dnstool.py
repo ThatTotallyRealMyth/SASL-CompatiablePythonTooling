@@ -406,6 +406,16 @@ def ensure_impacket_ldap_compat():
     This is all to solve the ultimate issue of needing signign/encryption support when LDAP signing is on without
     needing LDAPS to be accessible
     """
+    # Map ldap3 strings/constants to LDAP Protocol Integers. Why? because idk tbh.
+    # 0 = Add, 1 = Delete, 2 = Replace
+    OPERATION_MAP = {
+        MODIFY_ADD: 0,
+        MODIFY_DELETE: 1,
+        MODIFY_REPLACE: 2,
+        'MODIFY_ADD': 0,
+        'MODIFY_DELETE': 1,
+        'MODIFY_REPLACE': 2
+    }
 
     AddRequest = getattr(ldap, 'AddRequest', ldapasn1.AddRequest)
     ModifyRequest = getattr(ldap, 'ModifyRequest', ldapasn1.ModifyRequest)
