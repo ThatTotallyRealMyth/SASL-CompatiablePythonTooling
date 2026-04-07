@@ -124,6 +124,7 @@ class LDAPConnectionAdapter(object):
         }
         # Default to wholeSubtree (2) if an invalid scope is passed
         return ldapasn1.Scope(scopes.get(search_scope, 'wholeSubtree'))
+    
     def _extract_raw_vals(self, attribute):
         out = []
         for value in attribute['vals']:
@@ -154,7 +155,7 @@ class LDAPConnectionAdapter(object):
             attrs[attr_name] = LDAPAttributeAdapter(vals, raw_vals)
         return LDAPEntryAdapter(dn, attrs)
 
-    def search(self, search_base=None, search_filter='(objectClass=*)', search_scope=ldap3.SUBTREE,
+    def search(self, search_base=None, search_filter='(objectClass=*)', search_scope=2, #replaced ldap3.SUBTREE as an agrument with 2
                attributes=None, controls=None):
         if attributes is None:
             attributes = []
@@ -390,7 +391,7 @@ class BADSUCCESSOR:
             success = ldapConnection.search(
                 search_base=self.__baseDN,
                 search_filter='(&(objectCategory=computer)(objectClass=computer)(userAccountControl:1.2.840.113556.1.4.803:=8192))',
-                search_scope=ldap3.SUBTREE,
+                search_scope=2, #replaced the argument from ldap3.SUBTREE to 2
                 attributes=['operatingSystem', 'operatingSystemVersion']
             )
 
@@ -417,7 +418,7 @@ class BADSUCCESSOR:
             success = ldapConnection.search(
                 search_base=self.__baseDN,
                 search_filter='(objectClass=organizationalUnit)',
-                search_scope=ldap3.SUBTREE,
+                search_scope=2,
                 attributes=['distinguishedName', 'nTSecurityDescriptor'],
                 controls=security_descriptor_control(sdflags=0x5)
             )
@@ -566,7 +567,7 @@ class BADSUCCESSOR:
             success = ldapConnection.search(
                 search_base=self.__baseDN,
                 search_filter='(objectSid=%s)' % sid,
-                search_scope=ldap3.SUBTREE,
+                search_scope=2,
                 attributes=['sAMAccountName']
             )
 
@@ -722,7 +723,7 @@ class BADSUCCESSOR:
                 success = ldapConnection.search(
                     search_base=self.__baseDN,
                     search_filter=search_filter,
-                    search_scope=ldap3.SUBTREE,
+                    search_scope=2,
                     attributes=['objectSid']
                 )
                 if success and len(ldapConnection.entries) > 0:
@@ -744,7 +745,7 @@ class BADSUCCESSOR:
             success = ldapConnection.search(
                 search_base=self.__baseDN,
                 search_filter='(&(objectClass=*)(sAMAccountName=%s))' % target_account,
-                search_scope=ldap3.SUBTREE,
+                search_scope=2,
                 attributes=['distinguishedName', 'objectClass']
             )
 
@@ -807,7 +808,7 @@ class BADSUCCESSOR:
             success = ldapConnection.search(
                 search_base=self.__baseDN,
                 search_filter='(&(objectClass=*)(sAMAccountName=%s))' % self.__targetAccount,
-                search_scope=ldap3.SUBTREE,
+                search_scope=2,
                 attributes=['distinguishedName', 'objectClass']
             )
 
