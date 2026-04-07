@@ -38,7 +38,7 @@ from struct import unpack
 
 from impacket.structure import Structure
 from impacket.krb5.ccache import CCache
-from impacket.krb5.kerberosv5 import getKerberosTGT, getKerberosTGS
+import ldap3
 from impacket.krb5.types import Principal
 from impacket.krb5 import constants
 from impacket.ldap import ldap, ldaptypes, ldapasn1
