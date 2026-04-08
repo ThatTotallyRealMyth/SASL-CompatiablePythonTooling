@@ -409,7 +409,104 @@ def custom_escape_filter_chars(text):
     for char, replacement in replacements.items():
         text = text.replace(char, replacement)
     return text
+def custom_ldap_operations_implementation():
+    """
+    Older Impacket builds it seems did not have the same plugin and play add/delete/modify methods on the LDAPConnection class that impacket exposes
+    today in the main repo. I tried on my current kali, and other friends and all could not figure it out. Im really lost as to how to address this
+    and any help/prs appreciate. For now Im using this to ensure we have access to the same methods as ldap3 exposed to minimize how much code patterns
+    from this script need changing.
+    """
 
+    AddRequest = getattr(ldap, 'AddRequest', ldapasn1.AddRequest)
+    ModifyRequest = getattr(ldap, 'ModifyRequest', ldapasn1.ModifyRequest)
+    DelRequest = getattr(ldap, 'DelRequest', ldapasn1.DelRequest)
+    ResultCode = getattr(ldap, 'ResultCode', ldapasn1.ResultCode)
+    LDAPSessionError = getattr(ldap, 'LDAPSessionError')
+
+    if not hasattr(ldap.LDAPConnection, 'add'):
+        def _compat_add(self, dn, objectClass, attributes=None, controls=None):
+            if attributes is None:
+                attributes = {}
+
+            addRequest = AddRequest()
+            addRequest['entry'] = dn
+            addRequest['attributes'][0]['type'] = 'objectClass'
+            addRequest['attributes'][0]['vals'].setComponents(*objectClass)
+
+            index = 1
+            for key, value in attributes.items():
+                addRequest['attributes'][index]['type'] = key
+                if isinstance(value, list):
+                    addRequest['attributes'][index]['vals'].setComponents(
+                        *(str(val) if isinstance(val, int) else val for val in value)
+                    )
+                else:
+                    addRequest['attributes'][index]['vals'].setComponents(
+                        str(value) if isinstance(value, int) else value
+                    )
+                index += 1
+
+            response = self.sendReceive(addRequest, controls)[0]['protocolOp']
+            if response['addResponse']['resultCode'] != ResultCode('success'):
+                raise LDAPSessionError(
+                    error=int(response['addResponse']['resultCode']),
+                    errorString='Error in addRequest -> %s: %s' % (
+                        response['addResponse']['resultCode'].prettyPrint(),
+                        response['addResponse']['diagnosticMessage'],
+                    )
+                )
+            return True
+
+        ldap.LDAPConnection.add = _compat_add
+
+    if not hasattr(ldap.LDAPConnection, 'modify'):
+        def _compat_modify(self, dn, modifications, controls=None):
+            modifyRequest = ModifyRequest()
+            modifyRequest['object'] = dn
+
+            idx = 0
+            for attr, ops in modifications.items():
+                for op in ops:
+                    modifyRequest['changes'][idx]['operation'] = op[0]
+                    modifyRequest['changes'][idx]['modification']['type'] = attr
+
+                    vals = []
+                    if isinstance(op[1], list):
+                        vals.extend(str(val) if isinstance(val, int) else val for val in op[1])
+                    else:
+                        vals.append(str(op[1]) if isinstance(op[1], int) else op[1])
+
+                    modifyRequest['changes'][idx]['modification']['vals'].setComponents(*vals)
+                    idx += 1
+
+            response = self.sendReceive(modifyRequest, controls)[0]['protocolOp']
+            if response['modifyResponse']['resultCode'] != ResultCode('success'):
+                raise LDAPSessionError(
+                    error=int(response['modifyResponse']['resultCode']),
+                    errorString='Error in modifyRequest -> %s: %s' % (
+                        response['modifyResponse']['resultCode'].prettyPrint(),
+                        response['modifyResponse']['diagnosticMessage'],
+                    )
+                )
+            return True
+
+        ldap.LDAPConnection.modify = _compat_modify
+
+    if not hasattr(ldap.LDAPConnection, 'delete'):
+        def _compat_delete(self, dn, controls=None):
+            deleteRequest = DelRequest(dn)
+            response = self.sendReceive(deleteRequest, controls)[0]['protocolOp']
+            if response['delResponse']['resultCode'] != ResultCode('success'):
+                raise LDAPSessionError(
+                    error=int(response['delResponse']['resultCode']),
+                    errorString='Error in deleteRequest -> %s: %s' % (
+                        response['delResponse']['resultCode'].prettyPrint(),
+                        response['delResponse']['diagnosticMessage'],
+                    )
+                )
+            return True
+
+        ldap.LDAPConnection.delete = _compat_delete
 
 def parse_target(host_arg, force_ssl, port):
     if host_arg.lower().startswith(('ldap://', 'ldaps://')):
