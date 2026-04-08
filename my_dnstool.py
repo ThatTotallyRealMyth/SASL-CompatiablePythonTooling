@@ -527,6 +527,7 @@ def parse_target(host_arg, force_ssl, port):
 
 
 def main():
+    custom_ldap_operations_implementation()
 
     parser = argparse.ArgumentParser(description='Query/modify DNS records for Active Directory integrated DNS via LDAP')
     parser._optionals.title = "Main options"
