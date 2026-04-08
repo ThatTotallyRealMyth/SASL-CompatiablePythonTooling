@@ -857,7 +857,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(add_help=True, description='dMSA exploitation tool.')
 
-    parser.add_argument('account', action='store', metavar='[domain/]username[:password]', help='Account used to authenticate to DC.')
+    parser.add_argument('account', action='store', metavar='[domain/]username[:password]@DCHostOrIP', help='Account used to authenticate to DC.')
     parser.add_argument('-dmsa-name', action='store', metavar='dmsa_name', help='Name of dMSA to add. If omitted, a random dMSA-[A-Z0-9]{8} will be used.')
     parser.add_argument('-action', choices=['add', 'delete', 'modify', 'search'], default='search', help='Action to perform: add (requires -target-ou), delete (requires -dmsa-name, -target-ou), modify (requires -dmsa-name, -target-ou and -target-account), or search a dMSA.')
     parser.add_argument('-target-ou', action='store', metavar='OU_DN', help='Specific OU to check for dMSA creation capabilities (e.g., "OU=weakOU,DC=domain,DC=local")')
