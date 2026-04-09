@@ -154,7 +154,7 @@ def main():
 
     if args.clear:
         print_o('Printing object before clearing')
-        print_target_attrs(targetobject)
+        print_target_attributes(targetobject)
 
     modifyRequest = ldapasn1.ModifyRequest()
     modifyRequest['object'] = dn
