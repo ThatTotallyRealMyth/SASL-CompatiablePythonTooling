@@ -476,7 +476,12 @@ class BADSUCCESSOR:
                     dacl = sd['Dacl']
                     if dacl and hasattr(dacl, 'aces') and dacl.aces:
                         for ace in dacl.aces:
-                            if ace['AceType'] != ldaptypes.ACCESS_ALLOWED_ACE.ACE_TYPE:
+                            # Fix one: Ensure that we parse both standard ACEs (0x00) and Object-Specific ACEs (0x05)
+                            allowed_types = [
+                                ldaptypes.ACCESS_ALLOWED_ACE.ACE_TYPE,
+                                ldaptypes.ACCESS_ALLOWED_OBJECT_ACE.ACE_TYPE
+                            ]
+                            if ace['AceType'] not in allowed_types:
                                 continue
 
                             mask = int(ace['Ace']['Mask']['Mask'])
@@ -484,9 +489,15 @@ class BADSUCCESSOR:
                             if not has_relevant_right:
                                 continue
 
+                            # Fix two: Properly parse the ittle-endian raw bytes into a dashed GUID string
                             object_type = getattr(ace['Ace'], 'ObjectType', None)
                             if object_type:
-                                object_guid = str(object_type).lower()
+                                import uuid
+                                try:
+                                    object_guid = str(uuid.UUID(bytes_le=object_type)).lower()
+                                except Exception:
+                                    continue
+                                
                                 if object_guid not in relevant_object_types:
                                     continue
 
