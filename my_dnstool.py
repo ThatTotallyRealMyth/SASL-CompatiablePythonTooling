@@ -25,6 +25,8 @@
 #
 # Minimal transport change: swap ldap3 session/bind usage for Impacket's
 # LDAPConnection so SASL/GSS-SPNEGO signing/sealing works on DCs that require it.
+# Additionally added in functions to replace ldap3 modify/add/delete functionality for custom ones
+# if the version of impacket present on ones system doesnt expose them in LDAPConnection class
 #
 ####################
 import sys
