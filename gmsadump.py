@@ -382,7 +382,7 @@ class GetGMSAPasswords:
         
         try:
             self.__ldapConn = self.ldap_auth()
-        except Exception as e:
+        except ldap.LDAPException as e:
             logging.error('Authentication failed: %s', e)
             sys.exit(1)
 
@@ -391,7 +391,7 @@ class GetGMSAPasswords:
         if self.__useLdaps:
             logging.info('[+] Using LDAPS (port 636).')
         else:
-            logging.info('[+] Using plain LDAP with NTLM Sign+Seal.')
+            logging.info('[+] Using plain LDAP.')
 
         logging.info('Querying %s for gMSA objects.', self.__target)
 
