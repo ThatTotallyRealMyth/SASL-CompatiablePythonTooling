@@ -314,8 +314,9 @@ class BADSUCCESSOR:
         try:
             ldapConnection = self._ldap_connect()
         except Exception as e:
-            raise Exception('Could not connect to LDAP server: %s' % str(e))
-
+            if 'Unexpected EOF' in str(e):
+                raise Exception('This likely indicates that a TLS cert is not configured on LDAPS. Consider using -method LDAP flag: %s' % str(e))
+            raise Exception('Failed to connect to LDAP server: %s' % str(e))
         connectTo = self.__targetIp if self.__targetIp else (self.__target if self.__target else self.__domain)
         logging.info('Connected to %s as %s\\%s' % (connectTo, self.__domain, self.__username))
         if self.__method == 'LDAP':
