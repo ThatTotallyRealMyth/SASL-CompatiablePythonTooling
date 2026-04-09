@@ -23,7 +23,7 @@
 #
 # Tool to interact with ADIDNS over LDAP
 #
-# Minimal transport change: swap ldap3 session/bind usage for Impacket's
+# swap ldap3 session/bind usage for Impacket's
 # LDAPConnection so SASL/GSS-SPNEGO signing/sealing works on DCs that require it.
 # Additionally added in functions to replace ldap3 modify/add/delete functionality for custom ones
 # if the version of impacket present on ones system doesnt expose them in LDAPConnection class
@@ -607,7 +607,7 @@ def main():
             c.kerberosLogin(user, password, domain, lmhash, nthash, args.aesKey, kdcHost=kdcHost)
         else:
             c.login(user, password, domain, lmhash, nthash, authenticationChoice='sasl')
-    except ldap.LDAPException as e:
+    except ldap.LDAPSessionError as e:
         print_f('Could not bind with specified credentials')
         print_f(str(e))
         sys.exit(1)
