@@ -536,7 +536,7 @@ def main():
     parser._optionals.title = "Main options"
     parser._positionals.title = "Required options"
 
-    parser.add_argument("-dc-host", type=str, metavar='HOSTNAME', help="Hostname/ip or ldap://host:port connection string to connect to")
+    parser.add_argument("host", type=str, metavar='HOSTNAME', help="Hostname/ip or ldap://host:port connection string to connect to")
     parser.add_argument("-u", "--user", type=str, metavar='USERNAME', help="DOMAIN\\username for authentication.")
     parser.add_argument("-p", "--password", type=str, metavar='PASSWORD', help="Password or LM:NTLM hash, will prompt if not specified")
     parser.add_argument("--forest", action='store_true', help="Search the ForestDnsZones instead of DomainDnsZones")
