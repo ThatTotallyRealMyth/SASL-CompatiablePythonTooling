@@ -1,12 +1,4 @@
 #!/usr/bin/env python3
-# /// script
-# requires-python = ">=3.12"
-# dependencies = [
-#     "cryptodome",
-#     "impacket",
-# ]
-# ///
-
 # Impacket - Collection of Python classes for working with network protocols.
 #
 # Copyright Fortra, LLC and its affiliated companies
@@ -18,19 +10,17 @@
 # for more information.
 #
 # Description:
-#   Queries Active Directory via LDAP to enumerate all Group Managed Service
-#   Accounts (gMSAs) and when LDAPS/TLS is available, dumps their managed
-#   password as NT hash, AES-128, and AES-256 kerberos keys.
+#   Queries Active Directory via LDAP to enumerate all or a specific/target Group Managed Service
+#   Accounts (gMSAs) and dumps their managed password as NT hash, AES-128, and AES-256 kerberos keys.
+#   Can be used to only enumerate, using the -enum flag. Additionally you can use -gmsa to specify a specific object
+#   or using wildcard.
 #
-#   Without TLS (plain LDAP) the msDS-ManagedPassword attribute is not
-#   returned by the DC, so only the ACL membership (which principals are
-#   authorised to retrieve the password) is displayed. It is possible to do this without LDAPS
-# TODO: Implement the ability to get the passwords even if theres no LDAPS as thats possible with other tools like bloodyAD
+#
 #
 # Author:
-#   Abdul Mhanni
+#   Abdul Mhanni And Alexander Chin-Lenn
 #
-# Inspired by / based on the following. I heavily took from these from actual content to formating style etc:
+# Inspired by / based on the following(Note we heavily took from these from actual content to formating style etc):
 #   Alberto Solino (@agsolino) - GetAdUsers
 #   Fowz Masood - GetADComputers
 #   micahvandeusen - gMSADumper (https://github.com/micahvandeusen/gMSADumper)
@@ -223,10 +213,7 @@ class GetGMSAPasswords:
 
 
     def _resolve_sid(self, sid_canonical):
-        """
-        Resolve a SID string to a sAMAccountName via a secondary LDAP search.
-        Uses impacket's perRecordCallback pattern to collect the result.
-        """
+        
         results = []
 
         def _collect(item):
@@ -338,17 +325,7 @@ class GetGMSAPasswords:
 
 
     def _build_GMSA_locate_filter(self):
-        """
-        here building the LDAP filter used to find gMSA objects.
-
-        If -gmsa-filter is set, we use that and force objectClass to
-        msDS-GroupManagedServiceAccount.
-
-        If -gmsa is set, we search by sAMAccountName. Wildcards are left
-        alone, and a trailing '$' is added if the caller didnt add one.
-
-        default is non of these are set and so we will return a filter that matches all gMSAs.
-        """
+        
         base = '(objectClass=msDS-GroupManagedServiceAccount)'
 
         if self.__gmsaFilter:
@@ -366,15 +343,7 @@ class GetGMSAPasswords:
         return '(&{})'.format(base)
 
     def ldap_auth(self):
-        """
-        Build and return an authenticated impacket LDAPConnection.
-
-        Impacket's LDAP implementation negotiates NTLM with Sign+Seal
-        automatically on plain LDAP (port 389), which is the same
-        "SASL GSS-API Privacy" behaviour visible in Wireshark when bloodyAD
-        runs. The DC treats this as a confidential channel and will return
-        msDS-ManagedPassword without needing LDAPS or STARTTLS.
-        """
+        
         target = self.__kdcIP or self.__kdcHost or self.__domain
         self.__target = target
 
@@ -393,7 +362,7 @@ class GetGMSAPasswords:
                 kdcHost=self.__kdcIP,
             )
         else:
-            logging.debug('[*] Authenticating with NTLM (Sign+Seal active)')
+            logging.debug('[*] Authenticating with NTLM')
             ldapConn.login(
                 self.__username, self.__password, self.__domain,
                 self.__lmhash, self.__nthash,
@@ -403,27 +372,23 @@ class GetGMSAPasswords:
     
 
     def run(self):
-        # ldap_auth() connects and authenticates in one shot — no separate
-        # open()/bind() needed. NTLM Sign+Seal is negotiated during login().
+        
         try:
             self.__ldapConn = self.ldap_auth()
         except Exception as e:
             logging.error('Authentication failed: %s', e)
             sys.exit(1)
 
-        # Impacket's NTLM login negotiates signing/sealing automatically, so
-        # plain LDAP is treated as confidential by the DC just like LDAPS.
+        
         self.__tlsActive = True
         if self.__useLdaps:
             logging.info('[+] Using LDAPS (port 636).')
         else:
-            logging.info('[+] Using plain LDAP with NTLM Sign+Seal — channel is confidential.')
+            logging.info('[+] Using plain LDAP with NTLM Sign+Seal.')
 
         logging.info('Querying %s for gMSA objects.', self.__target)
 
-        # Only request the password attribute when the operator hasn't asked
-        # for ACL-only enumeration. The DC silently omits it if the caller
-        # is not authorised regardless, but there's no point asking for it.
+    
         attrs = ['sAMAccountName', 'msDS-GroupMSAMembership']
         if not self.__enumOnly:
             attrs.append('msDS-ManagedPassword')
@@ -456,8 +421,8 @@ if __name__ == '__main__':
     parser.add_argument('target', action='store', help='domain[/username[:password]]')
     parser.add_argument('-ts', action='store_true', help='Adds timestamp to every logging output')
     parser.add_argument('-debug', action='store_true', help='Turn DEBUG output ON')
-    parser.add_argument('-use-ldaps', action='store_true', default=False, help='Connect via LDAPS (port 636) instead of plain LDAP with NTLM session security')
-    parser.add_argument('-enum', action='store_true', dest='enum_only', help='ACL enumeration only — show which principals can read each gMSA password, skip credential extraction')
+    parser.add_argument('-use-ldaps', action='store_true', default=False, help='Connect via LDAPS (port 636) instead of plain LDAP.')
+    parser.add_argument('-enum', action='store_true', dest='enum_only', help='ACL enumeration only show which principals can read each gMSA password, without credential extraction')
 
     group = parser.add_argument_group('targeting')
     group2 = group.add_mutually_exclusive_group()
