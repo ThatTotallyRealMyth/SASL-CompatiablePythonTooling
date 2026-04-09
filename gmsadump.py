@@ -212,7 +212,11 @@ class GetGMSAPasswords:
 
 
     def _resolve_sid(self, sid_canonical):
-        
+        #if statement to ensure we dont trigger an ldap lookup for a sid we have encountered/resolved before.
+        if sid_canonical in self.__discovered_sid_cache:
+            return self.__discovered_sid_cache[sid_canonical]
+            #returned result could either be the appropriately formarted and resolved name or original sid that failed a lookup
+
         results = []
 
         def _collect(item):
@@ -234,9 +238,13 @@ class GetGMSAPasswords:
                     self._attr_value(attrs, 'cn')
                 )
                 if resolved:
-                    return '{} ({})'.format(resolved, sid_canonical)
+                    formated_resolved_name = '{} ({})'.format(resolved, sid_canonical)
+                    self.__discovered_sid_cache[sid_canonical] = formated_resolved_name #store the SID alongside the asscociated object attributes
+                    return formated_resolved_name
         except Exception as exc:
             logging.debug('SID resolution error for %s: %s', sid_canonical, exc)
+            self.__discovered_sid_cache[sid_canonical] = sid_canonical #cache the failure result too so we dont keep trying to resolve the sid later
+
 
         return sid_canonical
 
