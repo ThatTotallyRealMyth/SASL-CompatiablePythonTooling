@@ -607,7 +607,7 @@ def main():
             c.kerberosLogin(user, password, domain, lmhash, nthash, args.aesKey, kdcHost=kdcHost)
         else:
             c.login(user, password, domain, lmhash, nthash, authenticationChoice='sasl')
-    except Exception as e:
+    except ldap.LDAPException as e:
         print_f('Could not bind with specified credentials')
         print_f(str(e))
         sys.exit(1)
