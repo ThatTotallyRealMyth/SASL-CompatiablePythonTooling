@@ -132,10 +132,9 @@ class GetGMSAPasswords:
         self.__kdcHost      = cmdLineOptions.dc_host
         self.__useLdaps     = cmdLineOptions.use_ldaps
         self.__enumOnly     = cmdLineOptions.enum_only
-        # either a specific gMSA name (wildcards allowed) or a
-        # raw LDAP filter string supplied by the operator
         self.__gmsaName     = cmdLineOptions.gmsa        #you can use 'svcWeb$' or 'svc*'
         self.__gmsaFilter   = cmdLineOptions.gmsa_filter # raw LDAP addon
+        self.__discovered_sid_cache = {} # Cache for resolved SIDs to avoid triggering ldap look up every new sid encountered
 
         if cmdLineOptions.hashes is not None:
             self.__lmhash, self.__nthash = cmdLineOptions.hashes.split(':')
