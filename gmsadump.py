@@ -191,15 +191,9 @@ class GetGMSAPasswords:
         ekeys = generate_kerberos_keys(
             hex_pass=hexlify(password_bytes).decode("ascii"), user=sam, domain=domain
         )
-        nt = hexlify(
-            ekeys[int(constants.EncryptionTypes.rc4_hmac.value)].contents
-        ).decode("ascii")
-        aes256 = hexlify(
-            ekeys[int(constants.EncryptionTypes.aes256_cts_hmac_sha1_96.value)].contents
-        ).decode("ascii")
-        aes128 = hexlify(
-            ekeys[int(constants.EncryptionTypes.aes128_cts_hmac_sha1_96.value)].contents
-        ).decode("ascii")
+        nt = hexlify(ekeys[int(constants.EncryptionTypes.rc4_hmac.value)].contents).decode("ascii")
+        aes256 = hexlify(ekeys[int(constants.EncryptionTypes.aes256_cts_hmac_sha1_96.value)].contents).decode("ascii")
+        aes128 = hexlify(ekeys[int(constants.EncryptionTypes.aes128_cts_hmac_sha1_96.value)].contents).decode("ascii")
         return nt, aes256, aes128
 
     def _resolve_sid(self, sid_canonical):
@@ -325,19 +319,13 @@ class GetGMSAPasswords:
                     )
                     print("\n    [Previous Password]")
                     print("    {}::::{}".format(sam, previous_nthash))
-                    print(
-                        "    {}:aes256-cts-hmac-sha1-96:{}".format(sam, previous_aes256)
-                    )
-                    print(
-                        "    {}:aes128-cts-hmac-sha1-96:{}".format(sam, previous_aes128)
-                    )
+                    print("    {}:aes256-cts-hmac-sha1-96:{}".format(sam, previous_aes256))
+                    print("    {}:aes128-cts-hmac-sha1-96:{}".format(sam, previous_aes128))
 
             elif not self.__enumOnly:
                 if self.__tlsActive:
-                    print(
-                        "    [-] msDS-ManagedPassword not returned "
-                        "(this account may not be authorised to read it)"
-                    )
+                    print("    [-] msDS-ManagedPassword not returned "
+                        "(this account may not be authorised to read it)")
                 else:
                     print(
                         "    [-] msDS-ManagedPassword requires a confidential channel "
