@@ -489,15 +489,13 @@ class BADSUCCESSOR:
                             if not has_relevant_right:
                                 continue
 
-                            # Fix two: Properly parse the ittle-endian raw bytes into a dashed GUID string
-                            object_type = getattr(ace['Ace'], 'ObjectType', None)
+                            
+                            ace_data = ace['Ace']
+                            object_type = ace_data['ObjectType']
                             if object_type:
                                 import uuid
-                                try:
-                                    object_guid = str(uuid.UUID(bytes_le=object_type)).lower()
-                                except Exception:
-                                    continue
-                                
+                                object_guid = str(uuid.UUID(bytes_le=object_type)).lower()
+                                logging.debug(object_guid)
                                 if object_guid not in relevant_object_types:
                                     continue
 
