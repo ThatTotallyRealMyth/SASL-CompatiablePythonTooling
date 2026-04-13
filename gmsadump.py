@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "impacket",
+# ]
+# ///
+
 # Impacket - Collection of Python classes for working with network protocols.
 #
 # Copyright Fortra, LLC and its affiliated companies
@@ -182,8 +189,8 @@ class GetGMSAPasswords:
     def _extract_credintials_from_blob(password_bytes, sam, domain):
         """
         Derive NT hash and AES Kerberos keys from raw UTF-16LE password bytes
-        from an msDS-ManagedPassword blob. Uses hex_pass to safely handle
-        arbitrary byte sequences including illegal UTF-16LE surrogates.
+        from an msDS-ManagedPassword blob. Uses impackets impacket.krb5.crypto generate_kerberos_keys()
+        
         Returns (nt, aes256, aes128).
         """
         ekeys = generate_kerberos_keys(
@@ -291,7 +298,7 @@ class GetGMSAPasswords:
 
                 # Strip the trailing UTF-16LE null terminator (2 bytes)
                 current_passw     = blob['CurrentPassword'][:-2]
-                nthash, aes128_keys, aes256_keys = self._extract_credintials_from_blob(sam, self.__domain, current_passw)
+                nthash, aes128_keys, aes256_keys = self._extract_credintials_from_blob(current_passw, sam, self.__domain, )
 
                 print('    {}::::{}'.format(sam, nthash))
                 print('    {}:aes256-cts-hmac-sha1-96:{}'.format(sam, aes256_keys))
@@ -300,7 +307,7 @@ class GetGMSAPasswords:
                 # Previous password (if the DC has cycled it at least once)
                 if blob['PreviousPassword']:
                     previous_passw         = blob['PreviousPassword'][:-2]
-                    previous_nthash, previous_aes128, previous_aes256 = self._extract_credintials_from_blob(sam, self.__domain, previous_passw)
+                    previous_nthash, previous_aes128, previous_aes256 = self._extract_credintials_from_blob(previous_passw, sam, self.__domain)
                     print('\n    [Previous Password]')
                     print('    {}::::{}'.format(sam, previous_nthash))
                     print('    {}:aes256-cts-hmac-sha1-96:{}'.format(sam, previous_aes256))
