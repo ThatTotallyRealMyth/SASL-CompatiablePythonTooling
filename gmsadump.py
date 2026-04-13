@@ -150,10 +150,7 @@ class GetGMSAPasswords:
         self.__tlsActive = False
 
     
-    # Static helpers that claud said would be more useful than the inline processing I previously had.
-    #Apperntly it means others who find similar situations can just copy paste the static helpers and call them instead of reimplement
-    #Credit goes to claud, thanks legend.
-
+    # S
     @staticmethod
     def _attr_value(item_attributes, attr_type):
         """
@@ -183,20 +180,21 @@ class GetGMSAPasswords:
         return None
 
 
-    @staticmethod
+    """ @staticmethod
     def _nt_hash(password_bytes):
         # password_bytes is already UTF-16LE encoded I believe so nothing more is needed
         md4 = MD4.new()
         md4.update(password_bytes)
         return hexlify(md4.digest()).decode('ascii')
+ """
+   
+    
+    """ def _kerberos_keys(sam, domain, password_bytes):
+        
+        #Derive AES-128 and AES-256 kerberos long term. their format is:
 
-    @staticmethod
-    def _kerberos_keys(sam, domain, password_bytes):
-        """
-        Derive AES-128 and AES-256 kerberos long term. their format is:
-
-            <DOMAIN_UPPER>host<sam_no_dollar_lower>.<domain_lower>
-        """
+        #<DOMAIN_UPPER>host<sam_no_dollar_lower>.<domain_lower>
+        
         password = password_bytes.decode('utf-16-le', errors='replace').encode('utf-8')
         #Kinda concenerd this one is not right but I have seen no evidence to suggest why this shouldnt work
         salt = '{}host{}.{}'.format(
@@ -209,7 +207,7 @@ class GetGMSAPasswords:
         aes256 = string_to_key(constants.EncryptionTypes.aes256_cts_hmac_sha1_96.value, password, salt)
 
         return (hexlify(aes128.contents).decode('ascii'), hexlify(aes256.contents).decode('ascii'))
-
+  """
 
     def _resolve_sid(self, sid_canonical):
         #if statement to ensure we dont trigger an ldap lookup for a sid we have encountered/resolved before.
