@@ -131,7 +131,7 @@ class GetGMSAPasswords:
         self.__kdcIP        = cmdLineOptions.dc_ip
         self.__kdcHost      = cmdLineOptions.dc_host
         self.__useLdaps     = cmdLineOptions.use_ldaps
-        self.__enumOnly     = cmdLineOptions.enum_only
+        self.__enumOnly     = cmdLineOptions.enum_only #when using the -enum we dont want to extract the passwords even if we can read them 
         self.__gmsaName     = cmdLineOptions.gmsa        #you can use 'svcWeb$' or 'svc*'
         self.__gmsaFilter   = cmdLineOptions.gmsa_filter # raw LDAP addon
         self.__discovered_sid_cache = {} # Cache for resolved SIDs to avoid triggering ldap look up every new sid encountered
@@ -241,8 +241,8 @@ class GetGMSAPasswords:
                     formated_resolved_name = '{} ({})'.format(resolved, sid_canonical)
                     self.__discovered_sid_cache[sid_canonical] = formated_resolved_name #store the SID alongside the asscociated object attributes
                     return formated_resolved_name
-        except Exception as exc:
-            logging.debug('SID resolution error for %s: %s', sid_canonical, exc)
+        except ldap.LDAPSessionError as e:
+            logging.debug('SID resolution error for %s: %s', sid_canonical, e)
             self.__discovered_sid_cache[sid_canonical] = sid_canonical #cache the failure result too so we dont keep trying to resolve the sid later
 
 
@@ -290,6 +290,11 @@ class GetGMSAPasswords:
             print('\n[*] Account:    {}'.format(sam))
             if principals:
                 print('    Readable by: {}'.format(', '.join(principals)))
+                
+                #check to see if the caller's username is explicitly in the parsed principals
+                caller = self.__username.lower()
+                if any(caller == p.split(' (')[0].split('\\')[-1].lower() for p in principals):
+                    print('    [+] Your current user, {} is allowed to read this gMSAs password'.format(self.__username))
             else:
                 print('    Readable by: (no principals resolved)')
 
@@ -318,7 +323,8 @@ class GetGMSAPasswords:
                     print('    {}::::{}'.format(sam, prev_nt))
                     print('    {}:aes256-cts-hmac-sha1-96:{}'.format(sam, prev256))
                     print('    {}:aes128-cts-hmac-sha1-96:{}'.format(sam, prev128))
-            else:
+            
+            elif not self.__enumOnly:
                 if self.__tlsActive:
                     print('    [-] msDS-ManagedPassword not returned '
                           '(this account may not be authorised to read it)')
@@ -329,8 +335,7 @@ class GetGMSAPasswords:
         except Exception as exc:
             logging.debug('Exception in processGMSAEntry()', exc_info=True)
             logging.error('Skipping item, cannot process due to error %s', str(exc))
-
-
+            
     def _build_GMSA_locate_filter(self):
         
         base = '(objectClass=msDS-GroupManagedServiceAccount)'
@@ -382,7 +387,7 @@ class GetGMSAPasswords:
         
         try:
             self.__ldapConn = self.ldap_auth()
-        except ldap.LDAPException as e:
+        except ldap.LDAPSessionError as e:
             logging.error('Authentication failed: %s', e)
             sys.exit(1)
 
@@ -399,6 +404,7 @@ class GetGMSAPasswords:
         attrs = ['sAMAccountName', 'msDS-GroupMSAMembership']
         if not self.__enumOnly:
             attrs.append('msDS-ManagedPassword')
+        
 
         search_filter = self._build_GMSA_locate_filter()
         logging.debug('Search filter: %s', search_filter)
